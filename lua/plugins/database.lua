@@ -45,4 +45,13 @@ return {
     dependencies = { "tpope/vim-dadbod" },
     ft = { "sql", "mysql", "plsql" },
   },
+
+  {
+    dir = vim.fn.expand("~/projects/dbout-render.nvim"),
+    name = "dbout-render.nvim",
+    ft = "dbout",
+    config = function()
+      require("dbout_render").setup()
+    end,
+  },
 }

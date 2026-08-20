@@ -19,6 +19,19 @@ Update this file whenever a new shortcut clicks, then commit it.
 
 ---
 
+## Go Projects (project.nvim)
+
+| Key / Command | Mode | What it does |
+|---|---|---|
+| `<leader>fp` | Normal | Open Telescope project switcher (recently opened Go/git projects) |
+| `:GoNewProject <path>` | Command | Scaffold a new Go project: mkdir, `go mod init`, starter `main.go`, cd + open |
+
+_Detection: any dir with `go.mod`, `.git`, or `Makefile` is auto-recognized as a project root._
+
+New Go projects live under `~/Projects/LearningGo/`, e.g. `:GoNewProject ~/Projects/LearningGo/my-new-app`.
+
+---
+
 ## Navigation
 
 _Add shortcuts here as you learn them._
