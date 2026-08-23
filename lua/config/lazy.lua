@@ -19,7 +19,13 @@ require("lazy").setup({
     -- add LazyVim and import its plugins
     { "LazyVim/LazyVim", import = "lazyvim.plugins" },
     -- import/override with your plugins, grouped by category
-    { import = "plugins.lang" },
+    -- (flat "plugins" root first, for top-level files that don't fit a
+    -- category — e.g. nais-dashboard.lua; safe alongside the subfolder
+    -- imports below since lsmod skips subdirs that lack their own init.lua)
+    { import = "plugins" },
+    { import = "plugins.lang.java" },
+    { import = "plugins.lang.go" },
+    { import = "plugins.lang.sql" },
     { import = "plugins.db" },
     { import = "plugins.git" },
     { import = "plugins.ui" },
