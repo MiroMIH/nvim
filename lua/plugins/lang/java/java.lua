@@ -48,6 +48,17 @@ return {
       -- Lombok javaagent — without this every @Getter/@Builder shows as an error
       opts.cmd_env = { JAVA_TOOL_OPTIONS = "-javaagent:" .. lombok_jar }
 
+      -- The lang.java extra resolves jdtls via `vim.fn.exepath("jdtls")`,
+      -- which comes back empty if this runs before mason.nvim has
+      -- prepended its bin/ dir to $PATH (a real race when opening a
+      -- single .java file directly from the shell — that fires the
+      -- FileType autocmd very early in startup). Fall back to Mason's
+      -- known install path so a slow PATH patch can't produce an empty
+      -- `cmd[1]` and a silent "language server not installed" failure.
+      if opts.cmd and (opts.cmd[1] == "" or vim.fn.executable(opts.cmd[1]) == 0) then
+        opts.cmd[1] = vim.fn.stdpath("data") .. "/mason/bin/jdtls"
+      end
+
       -- Per-service workspace: each service gets its own jdtls workspace dir
       -- so classpaths don't bleed between auth-service, dgsv-service, etc.
       opts.root_dir = function(fname)

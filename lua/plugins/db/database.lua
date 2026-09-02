@@ -36,6 +36,39 @@ return {
           vim.keymap.set("n", "<leader>dr", "<Plug>(DBUI_ExecuteQuery)", { buffer = true, desc = "Run query" })
           -- Visual mode: run selected lines only
           vim.keymap.set("v", "<leader>dr", "<Plug>(DBUI_ExecuteQuery)", { buffer = true, desc = "Run selected query" })
+
+          -- DBUI's "New query" opens its buffer in a fresh split rather than
+          -- reusing the LazyVim start screen's window (dashboard's buftype
+          -- and non-modifiable state make dadbod-ui's focus_window() skip
+          -- it), so the dashboard is left behind in another window — and
+          -- its "q" keymap is bound to `:qa`, not "close this window", so
+          -- pressing q on it quits Neovim entirely. Once a real query
+          -- buffer exists, the dashboard has nothing left to do.
+          --
+          -- Delete its buffer (not nvim_win_close on the window) so Snacks'
+          -- own BufWipeout/BufDelete autocmd runs and tears down its
+          -- WinResized/VimResized autocmd along with it — closing the
+          -- window directly skips that cleanup and leaves the resize
+          -- autocmd pointing at a now-invalid window id.
+          local dash_wins, dash_bufs, seen = {}, {}, {}
+          for _, win in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
+            local dbuf = vim.api.nvim_win_get_buf(win)
+            if vim.b[dbuf].snacks_main then
+              dash_wins[#dash_wins + 1] = win
+              if not seen[dbuf] then
+                seen[dbuf] = true
+                dash_bufs[#dash_bufs + 1] = dbuf
+              end
+            end
+          end
+          for _, dbuf in ipairs(dash_bufs) do
+            pcall(vim.api.nvim_buf_delete, dbuf, { force = true })
+          end
+          for _, win in ipairs(dash_wins) do
+            if vim.api.nvim_win_is_valid(win) and #vim.api.nvim_tabpage_list_wins(0) > 1 then
+              pcall(vim.api.nvim_win_close, win, true)
+            end
+          end
         end,
       })
     end,
