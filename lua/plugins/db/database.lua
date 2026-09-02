@@ -50,25 +50,36 @@ return {
           -- WinResized/VimResized autocmd along with it — closing the
           -- window directly skips that cleanup and leaves the resize
           -- autocmd pointing at a now-invalid window id.
-          local dash_wins, dash_bufs, seen = {}, {}, {}
-          for _, win in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
-            local dbuf = vim.api.nvim_win_get_buf(win)
-            if vim.b[dbuf].snacks_main then
-              dash_wins[#dash_wins + 1] = win
-              if not seen[dbuf] then
-                seen[dbuf] = true
-                dash_bufs[#dash_bufs + 1] = dbuf
+          --
+          -- Deferred to the next tick: this FileType event fires while
+          -- dadbod-ui's own open_buffer/setup_buffer is still mid-transaction
+          -- (it hasn't finished laying out the new split yet), so touching
+          -- other windows/buffers here can itself trigger a WinResized
+          -- while Snacks' dashboard autocmd is between "about to fire" and
+          -- "about to be torn down" — same stale-window-id error, just
+          -- self-inflicted instead of dadbod-ui's. Running after the event
+          -- loop settles avoids racing that window.
+          vim.schedule(function()
+            local dash_wins, dash_bufs, seen = {}, {}, {}
+            for _, win in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
+              local dbuf = vim.api.nvim_win_get_buf(win)
+              if vim.b[dbuf].snacks_main then
+                dash_wins[#dash_wins + 1] = win
+                if not seen[dbuf] then
+                  seen[dbuf] = true
+                  dash_bufs[#dash_bufs + 1] = dbuf
+                end
               end
             end
-          end
-          for _, dbuf in ipairs(dash_bufs) do
-            pcall(vim.api.nvim_buf_delete, dbuf, { force = true })
-          end
-          for _, win in ipairs(dash_wins) do
-            if vim.api.nvim_win_is_valid(win) and #vim.api.nvim_tabpage_list_wins(0) > 1 then
-              pcall(vim.api.nvim_win_close, win, true)
+            for _, dbuf in ipairs(dash_bufs) do
+              pcall(vim.api.nvim_buf_delete, dbuf, { force = true })
             end
-          end
+            for _, win in ipairs(dash_wins) do
+              if vim.api.nvim_win_is_valid(win) and #vim.api.nvim_tabpage_list_wins(0) > 1 then
+                pcall(vim.api.nvim_win_close, win, true)
+              end
+            end
+          end)
         end,
       })
     end,
