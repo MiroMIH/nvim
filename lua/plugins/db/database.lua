@@ -91,7 +91,7 @@ return {
   },
 
   {
-    dir = vim.fn.expand("~/projects/dbout-render.nvim"),
+    dir = vim.fn.expand("~/Projects/personal_projects/dbout-render.nvim"),
     name = "dbout-render.nvim",
     ft = "dbout",
     config = function()

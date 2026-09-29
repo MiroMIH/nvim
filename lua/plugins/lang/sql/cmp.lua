@@ -1,7 +1,7 @@
 return {
   -- db-value-completion: local dev (switch to "yourusername/db-value-completion.nvim" after publishing)
   {
-    dir = vim.fn.expand("~/projects/db-value-completion.nvim"),
+    dir = vim.fn.expand("~/Projects/personal_projects/db-value-completion.nvim"),
     name = "db-value-completion.nvim",
     ft = { "sql", "mysql", "plsql" },
     config = function()

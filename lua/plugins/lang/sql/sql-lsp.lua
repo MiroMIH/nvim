@@ -10,7 +10,19 @@ return {
   {
     "neovim/nvim-lspconfig",
     opts = {
-      servers = { sqlls = {} },
+      servers = {
+        sqlls = {
+          handlers = {
+            -- sql-language-server's own parser is incomplete for Postgres
+            -- (e.g. it can't handle schema-qualified names like
+            -- `schema.table` in CREATE TABLE), so its diagnostics are
+            -- frequently false positives on valid SQL. Drop them
+            -- unconditionally -- sqlls stays attached for completion/hover,
+            -- it just never gets to publish parse errors.
+            ["textDocument/publishDiagnostics"] = function() end,
+          },
+        },
+      },
     },
     init = function()
       vim.api.nvim_create_autocmd("LspAttach", {
@@ -22,8 +34,12 @@ return {
 
           if client.name == "sqls" and is_migration then
             vim.lsp.buf_detach_client(args.buf, args.data.client_id)
+            vim.diagnostic.reset(nil, args.buf)
           elseif client.name == "sqlls" and not is_migration then
             vim.lsp.buf_detach_client(args.buf, args.data.client_id)
+            vim.diagnostic.reset(nil, args.buf)
+          elseif client.name == "sqlls" and is_migration then
+            vim.diagnostic.reset(client.id, args.buf)
           end
         end,
       })
